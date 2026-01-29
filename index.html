@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intimacy Inquiry — A Game for Lovers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: radial-gradient(circle at center, #fff5f5 0%, #fed7d7 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .card-container {
+            perspective: 1000px;
+            width: 90vw;
+            max-width: 400px;
+            height: 550px;
+            cursor: pointer;
+        }
+
+        .card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-radius: 1.5rem;
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            text-align: center;
+            border: 8px solid white;
+        }
+
+        .card-front {
+            background: white;
+            color: #e53e3e;
+        }
+
+        .card-back {
+            background: #e53e3e;
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .level-btn {
+            transition: all 0.3s ease;
+        }
+
+        .level-btn.active {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(229, 62, 62, 0.4);
+        }
+
+        .icebreaker { border-color: #feb2b2; color: #c53030; }
+        .deep { border-color: #fc8181; color: #9b2c2c; }
+        .fire { border-color: #f56565; color: #742a2a; }
+
+        .floating-heart {
+            position: absolute;
+            pointer-events: none;
+            animation: float 4s ease-in infinite;
+            opacity: 0;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            20% { opacity: 0.6; }
+            100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="text-center mb-8">
+        <h1 class="serif text-4xl md:text-5xl text-red-700 mb-2">Intimacy Inquiry</h1>
+        <p class="text-sm uppercase tracking-widest text-red-500 font-semibold">Valentine's Edition</p>
+    </header>
+
+    <!-- Navigation Levels -->
+    <div class="flex gap-4 mb-8 z-10">
+        <button onclick="setLevel('icebreaker')" id="btn-icebreaker" class="level-btn active px-4 py-2 rounded-full border-2 border-red-200 bg-white text-xs font-bold uppercase text-red-500">
+            Icebreakers
+        </button>
+        <button onclick="setLevel('deep')" id="btn-deep" class="level-btn px-4 py-2 rounded-full border-2 border-red-200 bg-white text-xs font-bold uppercase text-red-500">
+            Deep
+        </button>
+        <button onclick="setLevel('fire')" id="btn-fire" class="level-btn px-4 py-2 rounded-full border-2 border-red-200 bg-white text-xs font-bold uppercase text-red-500">
+            Fire
+        </button>
+    </div>
+
+    <!-- The Card -->
+    <div class="card-container" onclick="flipCard()">
+        <div id="main-card" class="card">
+            <!-- Front of Card (The Question) -->
+            <div id="card-front" class="card-face card-front">
+                <span id="level-label" class="text-xs font-bold uppercase tracking-widest mb-6 text-red-300">Level 1</span>
+                <p id="question-text" class="serif text-2xl md:text-3xl leading-snug">Click to start the game</p>
+                <div class="mt-8 opacity-20">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                </div>
+            </div>
+            <!-- Back of Card (Brand/Logo) -->
+            <div class="card-face card-back">
+                <h2 class="serif text-4xl mb-4 italic">II</h2>
+                <p class="text-sm tracking-widest opacity-80 uppercase">Next Question</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="mt-10 flex flex-col items-center">
+        <button onclick="nextQuestion()" class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-full font-bold shadow-lg transition transform active:scale-95 mb-4">
+            Draw a Card
+        </button>
+        <p class="text-xs text-red-400">Tap the card to see the back</p>
+    </div>
+
+    <script>
+        const questions = {
+            icebreaker: [
+                "What was your first impression of me that turned out to be wrong?",
+                "If we were characters in a movie, which one would it be?",
+                "What's your favorite trip we've ever taken together?",
+                "Which gesture of mine always makes you smile?",
+                "What song reminds you of when we first met?",
+                "What's your funniest memory from our first date?",
+                "What personality trait of mine did you notice first?"
+            ],
+            deep: [
+                "What trait of mine made you first think I might be 'the one'?",
+                "What is the biggest thing you've learned from our relationship?",
+                "What is your biggest fear regarding our future?",
+                "When do you feel most loved by me?",
+                "What advice would you give our past selves on the day we met?",
+                "What are you most grateful to me for today?",
+                "Which conversation of ours changed your perspective on me?"
+            ],
+            fire: [
+                "What outfit of mine do you find the sexiest?",
+                "What is your boldest romantic memory of us?",
+                "Where would you want to spend a perfect night alone together?",
+                "What can I do to make you feel passion instantly?",
+                "What's your favorite type of physical touch (hugs, hand-holding, kissing)?",
+                "What is a fantasy about us that hasn't come true yet?",
+                "Describe our perfect morning after a passionate night."
+            ]
+        };
+
+        let currentLevel = 'icebreaker';
+        let isFlipped = false;
+
+        function setLevel(level) {
+            currentLevel = level;
+            
+            // UI Update
+            document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${level}`).classList.add('active');
+            
+            const cardFront = document.getElementById('card-front');
+            cardFront.className = 'card-face card-front ' + level;
+            
+            const labels = { icebreaker: 'Level 1: Icebreakers', deep: 'Level 2: Deep', fire: 'Level 3: Fire' };
+            document.getElementById('level-label').innerText = labels[level];
+            
+            nextQuestion();
+        }
+
+        function flipCard() {
+            isFlipped = !isFlipped;
+            document.getElementById('main-card').classList.toggle('is-flipped', isFlipped);
+        }
+
+        function nextQuestion() {
+            if (isFlipped) {
+                flipCard();
+                setTimeout(changeText, 300);
+            } else {
+                const card = document.getElementById('main-card');
+                card.style.transform = 'translateY(-20px) rotateX(10deg)';
+                setTimeout(() => {
+                    card.style.transform = '';
+                    changeText();
+                }, 200);
+            }
+            createHeart();
+        }
+
+        function changeText() {
+            const levelQuestions = questions[currentLevel];
+            const randomIndex = Math.floor(Math.random() * levelQuestions.length);
+            document.getElementById('question-text').innerText = levelQuestions[randomIndex];
+        }
+
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.innerHTML = '❤️';
+            heart.className = 'floating-heart text-2xl';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.bottom = '-20px';
+            heart.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 4000);
+        }
+
+        window.onload = () => {
+            changeText();
+        };
+    </script>
+</body>
+</html>
